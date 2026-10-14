@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: relayq
+      POSTGRES_PASSWORD: localdev
+      POSTGRES_DB: relayq
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U relayq"]
+      interval: 2s
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+  relayq:
+    build: .
+    ports: ["127.0.0.1:8080:8080"]
+    environment:
+      DATABASE_URL: postgres://relayq:localdev@postgres:5432/relayq?sslmode=disable
+      API_KEY: ${API_KEY:?set API_KEY}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:?set ALLOWED_HOSTS}
+    depends_on:
+      postgres:
+        condition: service_healthy
+volumes:
+  pgdata:
